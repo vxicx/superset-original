@@ -650,7 +650,17 @@ COMMON_BOOTSTRAP_OVERRIDES_FUNC: Callable[  # noqa: E731
 #     }]
 
 # This is merely a default
-EXTRA_CATEGORICAL_COLOR_SCHEMES: list[dict[str, Any]] = []
+#EXTRA_CATEGORICAL_COLOR_SCHEMES: list[dict[str, Any]] = []
+
+EXTRA_CATEGORICAL_COLOR_SCHEMES = [
+{
+         "id": 'vxiGlobalSolutionColours',
+         "description": '',
+         "label": 'VXI Brand Color Palette',
+         "colors":
+          ['#ff6d10','#f59259','#fab691','#fcdbc8','#353535','#707070','#bfbfbf','#184169','#4f6f8b','#8a9fb4','#c6cfd8','#379946','#66b277','#9bcba3','#991D20',
+                             '#b25357','#cf8e8b','#462f85','#7360a2','#a098c1','#eca921','#fecd04','#f1bc5a','#ffe681']
+}]
 
 # THEME_OVERRIDES is used for adding custom theme to superset
 # example code for "My theme" custom scheme

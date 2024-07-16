@@ -154,10 +154,6 @@ USER superset
 ######################################################################
 FROM dev AS ci
 
-COPY key.json /app/superset/
-
-ENV GOOGLE_APPLICATION_CREDENTIALS /app/superset/key.json
-
 COPY vxi-logo.png /app/superset/static/assets/images/
 COPY vxi-logo.jpg /app/superset/static/assets/images/
 COPY vxi-logo-2.png /app/superset/static/assets/images/
