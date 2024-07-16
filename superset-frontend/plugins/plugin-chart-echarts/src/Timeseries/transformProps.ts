@@ -277,6 +277,26 @@ export default function transformProps(
   const offsetLineWidths = {};
 
   rawSeries.forEach(entry => {
+
+    let position = 'top';
+
+    if (isHorizontal) {
+      // @ts-ignore
+      if (entry.data[0].some((value: number) => value < 0)) {
+        position = 'left';
+      } else {
+        position = 'right';
+      }
+    }
+    else {
+      // @ts-ignore
+      if (entry.data[0].some((value: number) => value < 0)) {
+        position = 'bottom';
+      } else {
+        position = 'top';
+      }
+    }
+
     const derivedSeries = isDerivedSeries(entry, chartProps.rawFormData);
     const lineStyle: LineStyleOption = {};
     if (derivedSeries) {
@@ -313,10 +333,10 @@ export default function transformProps(
         formatter: forcePercentFormatter
           ? percentFormatter
           : getCustomFormatter(
-              customFormatters,
-              metrics,
-              labelMap?.[seriesName]?.[0],
-            ) ?? defaultFormatter,
+            customFormatters,
+            metrics,
+            labelMap?.[seriesName]?.[0],
+          ) ?? defaultFormatter,
         showValue,
         onlyTotal,
         totalStackedValues: sortedTotalValues,
@@ -325,6 +345,7 @@ export default function transformProps(
         richTooltip,
         sliceId,
         isHorizontal,
+        position,
         lineStyle,
         timeCompare: array,
       },
@@ -439,8 +460,8 @@ export default function transformProps(
       : String;
 
   const {
-    setDataMask = () => {},
-    setControlValue = () => {},
+    setDataMask = () => { },
+    setControlValue = () => { },
     onContextMenu,
     onLegendStateChanged,
   } = hooks;
@@ -532,6 +553,7 @@ export default function transformProps(
       ...getDefaultTooltip(refs),
       show: !inContextMenu,
       trigger: richTooltip ? 'axis' : 'item',
+      position: 'bottom',
       formatter: (params: any) => {
         const [xIndex, yIndex] = isHorizontal ? [1, 0] : [0, 1];
         const xValue: number = richTooltip
@@ -625,26 +647,26 @@ export default function transformProps(
     },
     dataZoom: zoomable
       ? [
-          {
-            type: 'slider',
-            start: TIMESERIES_CONSTANTS.dataZoomStart,
-            end: TIMESERIES_CONSTANTS.dataZoomEnd,
-            bottom: TIMESERIES_CONSTANTS.zoomBottom,
-            yAxisIndex: isHorizontal ? 0 : undefined,
-          },
-          {
-            type: 'inside',
-            yAxisIndex: 0,
-            zoomOnMouseWheel: false,
-            moveOnMouseWheel: true,
-          },
-          {
-            type: 'inside',
-            xAxisIndex: 0,
-            zoomOnMouseWheel: false,
-            moveOnMouseWheel: true,
-          },
-        ]
+        {
+          type: 'slider',
+          start: TIMESERIES_CONSTANTS.dataZoomStart,
+          end: TIMESERIES_CONSTANTS.dataZoomEnd,
+          bottom: TIMESERIES_CONSTANTS.zoomBottom,
+          yAxisIndex: isHorizontal ? 0 : undefined,
+        },
+        {
+          type: 'inside',
+          yAxisIndex: 0,
+          zoomOnMouseWheel: false,
+          moveOnMouseWheel: true,
+        },
+        {
+          type: 'inside',
+          xAxisIndex: 0,
+          zoomOnMouseWheel: false,
+          moveOnMouseWheel: true,
+        },
+      ]
       : [],
   };
 
