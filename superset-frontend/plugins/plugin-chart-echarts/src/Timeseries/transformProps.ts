@@ -277,24 +277,17 @@ export default function transformProps(
   const offsetLineWidths = {};
 
   rawSeries.forEach(entry => {
-
     let position = 'top';
+
+    // @ts-ignore
+    const hasNegativeValue = entry.data[0].some((value: number) => value < 0);
 
     if (isHorizontal) {
       // @ts-ignore
-      if (entry.data[0].some((value: number) => value < 0)) {
-        position = 'left';
-      } else {
-        position = 'right';
-      }
-    }
-    else {
+      position = hasNegativeValue ? 'left' : 'right';
+    } else {
       // @ts-ignore
-      if (entry.data[0].some((value: number) => value < 0)) {
-        position = 'bottom';
-      } else {
-        position = 'top';
-      }
+      position = hasNegativeValue ? 'bottom' : 'top';
     }
 
     const derivedSeries = isDerivedSeries(entry, chartProps.rawFormData);
@@ -333,10 +326,10 @@ export default function transformProps(
         formatter: forcePercentFormatter
           ? percentFormatter
           : getCustomFormatter(
-            customFormatters,
-            metrics,
-            labelMap?.[seriesName]?.[0],
-          ) ?? defaultFormatter,
+              customFormatters,
+              metrics,
+              labelMap?.[seriesName]?.[0],
+            ) ?? defaultFormatter,
         showValue,
         onlyTotal,
         totalStackedValues: sortedTotalValues,
@@ -460,8 +453,8 @@ export default function transformProps(
       : String;
 
   const {
-    setDataMask = () => { },
-    setControlValue = () => { },
+    setDataMask = () => {},
+    setControlValue = () => {},
     onContextMenu,
     onLegendStateChanged,
   } = hooks;
@@ -647,26 +640,26 @@ export default function transformProps(
     },
     dataZoom: zoomable
       ? [
-        {
-          type: 'slider',
-          start: TIMESERIES_CONSTANTS.dataZoomStart,
-          end: TIMESERIES_CONSTANTS.dataZoomEnd,
-          bottom: TIMESERIES_CONSTANTS.zoomBottom,
-          yAxisIndex: isHorizontal ? 0 : undefined,
-        },
-        {
-          type: 'inside',
-          yAxisIndex: 0,
-          zoomOnMouseWheel: false,
-          moveOnMouseWheel: true,
-        },
-        {
-          type: 'inside',
-          xAxisIndex: 0,
-          zoomOnMouseWheel: false,
-          moveOnMouseWheel: true,
-        },
-      ]
+          {
+            type: 'slider',
+            start: TIMESERIES_CONSTANTS.dataZoomStart,
+            end: TIMESERIES_CONSTANTS.dataZoomEnd,
+            bottom: TIMESERIES_CONSTANTS.zoomBottom,
+            yAxisIndex: isHorizontal ? 0 : undefined,
+          },
+          {
+            type: 'inside',
+            yAxisIndex: 0,
+            zoomOnMouseWheel: false,
+            moveOnMouseWheel: true,
+          },
+          {
+            type: 'inside',
+            xAxisIndex: 0,
+            zoomOnMouseWheel: false,
+            moveOnMouseWheel: true,
+          },
+        ]
       : [],
   };
 

@@ -209,9 +209,9 @@ export default function transformProps(
   const refs: Refs = {};
   const colorScale = CategoricalColorNamespace.getScale(colorScheme as string);
 
-  console.log(data1)
+  console.log(data1);
 
-  console.log(data2)
+  console.log(data2);
 
   let xAxisLabel = getXAxisLabel(
     chartProps.rawFormData as QueryFormData,
@@ -243,17 +243,17 @@ export default function transformProps(
     ? getNumberFormatter(',.0%')
     : currencyFormat?.symbol
       ? new CurrencyFormatter({
-        d3Format: yAxisFormat,
-        currency: currencyFormat,
-      })
+          d3Format: yAxisFormat,
+          currency: currencyFormat,
+        })
       : getNumberFormatter(yAxisFormat);
   const formatterSecondary = contributionMode
     ? getNumberFormatter(',.0%')
     : currencyFormatSecondary?.symbol
       ? new CurrencyFormatter({
-        d3Format: yAxisFormatSecondary,
-        currency: currencyFormatSecondary,
-      })
+          d3Format: yAxisFormatSecondary,
+          currency: currencyFormatSecondary,
+        })
       : getNumberFormatter(yAxisFormatSecondary);
   const customFormatters = buildCustomFormatters(
     [...ensureIsArray(metrics), ...ensureIsArray(metricsB)],
@@ -373,9 +373,7 @@ export default function transformProps(
 
   // @ts-ignore
   // Sort the data array by the numerical value at index 1
-  rawSeriesA[0].data.sort((a, b) => {
-    return b[1] - a[1];
-  });
+  rawSeriesA[0].data.sort((a, b) => b[1] - a[1]);
 
   rawSeriesA.forEach(entry => {
     const entryName = String(entry.name || '');
@@ -411,9 +409,9 @@ export default function transformProps(
         formatter:
           seriesType === EchartsTimeseriesSeriesType.Bar
             ? getOverMaxHiddenFormatter({
-              max: yAxisMax,
-              formatter: seriesFormatter,
-            })
+                max: yAxisMax,
+                formatter: seriesFormatter,
+              })
             : seriesFormatter,
         showValueIndexes: showValueIndexesA,
         totalStackedValues,
@@ -423,15 +421,9 @@ export default function transformProps(
     if (transformedSeries) series.push(transformedSeries);
   });
 
-  console.log(rawSeriesB)
-
   // Sort the data array by the numerical value at index 1
   // @ts-ignore
-  rawSeriesB[0].data.sort((a, b) => {
-    return a[1] - b[1];
-  });
-
-  console.log(rawSeriesB)
+  rawSeriesB[0].data.sort((a, b) => a[1] - b[1]);
 
   rawSeriesB.forEach(entry => {
     const entryName = String(entry.name || '');
@@ -470,9 +462,9 @@ export default function transformProps(
         formatter:
           seriesTypeB === EchartsTimeseriesSeriesType.Bar
             ? getOverMaxHiddenFormatter({
-              max: maxSecondary,
-              formatter: seriesFormatter,
-            })
+                max: maxSecondary,
+                formatter: seriesFormatter,
+              })
             : seriesFormatter,
         showValueIndexes: showValueIndexesB,
         totalStackedValues: totalStackedValuesB,
@@ -514,7 +506,7 @@ export default function transformProps(
     convertInteger(xAxisTitleMargin),
   );
 
-  const { setDataMask = () => { }, onContextMenu } = hooks;
+  const { setDataMask = () => {}, onContextMenu } = hooks;
   const alignTicks = yAxisIndex !== yAxisIndexB;
 
   const echartOptions: EChartsCoreOption = {
@@ -711,13 +703,13 @@ export default function transformProps(
     },
     dataZoom: zoomable
       ? [
-        {
-          type: 'slider',
-          start: TIMESERIES_CONSTANTS.dataZoomStart,
-          end: TIMESERIES_CONSTANTS.dataZoomEnd,
-          bottom: TIMESERIES_CONSTANTS.zoomBottom,
-        },
-      ]
+          {
+            type: 'slider',
+            start: TIMESERIES_CONSTANTS.dataZoomStart,
+            end: TIMESERIES_CONSTANTS.dataZoomEnd,
+            bottom: TIMESERIES_CONSTANTS.zoomBottom,
+          },
+        ]
       : [],
   };
 

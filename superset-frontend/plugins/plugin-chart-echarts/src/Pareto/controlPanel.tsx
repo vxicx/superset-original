@@ -47,7 +47,6 @@ const {
   markerSize,
   minorSplitLine,
   opacity,
-  orderDesc,
   rowLimit,
   seriesType,
   showValues,
@@ -123,7 +122,7 @@ function createCustomizeSection(
           choices: [
             [EchartsTimeseriesSeriesType.Line, t('Line')],
             [EchartsTimeseriesSeriesType.Smooth, t('Smooth Line')],
-            [EchartsTimeseriesSeriesType.Bar, t('Bar')]
+            [EchartsTimeseriesSeriesType.Bar, t('Bar')],
           ],
           description: t('Series chart type (line, bar etc)'),
         },
@@ -332,9 +331,9 @@ const config: ControlPanelConfig = {
               default: yAxisBounds,
               description: t(
                 'Bounds for the primary Y-axis. When left empty, the bounds are ' +
-                'dynamically defined based on the min/max of the data. Note that ' +
-                "this feature will only expand the axis range. It won't " +
-                "narrow the data's extent.",
+                  'dynamically defined based on the min/max of the data. Note that ' +
+                  "this feature will only expand the axis range. It won't " +
+                  "narrow the data's extent.",
               ),
             },
           },
