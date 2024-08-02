@@ -17,8 +17,8 @@
  * under the License.
  */
 
-import { WordCloudFormData } from '../../src';
-import buildQuery from '../../src/plugin/buildQuery';
+import { WordCloudFormData } from '../src';
+import buildQuery from '../src/plugin/buildQuery';
 
 describe('WordCloud buildQuery', () => {
   const formData: WordCloudFormData = {
