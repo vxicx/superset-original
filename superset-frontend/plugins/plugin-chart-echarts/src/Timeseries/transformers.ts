@@ -164,6 +164,7 @@ export function transformSeries(
     seriesKey?: OptionName;
     sliceId?: number;
     isHorizontal?: boolean;
+    position?: string;
     lineStyle?: LineStyleOption;
     queryIndex?: number;
     timeCompare?: string[];
@@ -192,6 +193,7 @@ export function transformSeries(
     richTooltip,
     sliceId,
     isHorizontal = false,
+    position = 'top',
     queryIndex = 0,
     timeCompare = [],
   } = opts;
@@ -313,7 +315,8 @@ export function transformSeries(
     symbolSize: markerSize,
     label: {
       show: !!showValue,
-      position: isHorizontal ? 'right' : 'top',
+      // @ts-ignore
+      position,
       formatter: (params: any) => {
         const { value, dataIndex, seriesIndex, seriesName } = params;
         const numericValue = isHorizontal ? value[0] : value[1];

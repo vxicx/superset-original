@@ -68,6 +68,7 @@ import {
   EchartsSunburstChartPlugin,
   EchartsBubbleChartPlugin,
   EchartsWaterfallChartPlugin,
+  ParetoChartPlugin,
   BigNumberPeriodOverPeriodChartPlugin,
   EchartsHeatmapChartPlugin,
 } from '@superset-ui/plugin-chart-echarts';
@@ -161,6 +162,9 @@ export default class MainPreset extends Preset {
         }),
         new EchartsWaterfallChartPlugin().configure({
           key: 'waterfall',
+        }),
+        new ParetoChartPlugin().configure({
+          key: 'pareto',
         }),
         new EchartsHeatmapChartPlugin().configure({ key: 'heatmap_v2' }),
         new EchartsHistogramChartPlugin().configure({ key: 'histogram_v2' }),

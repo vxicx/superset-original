@@ -42,7 +42,7 @@ import click
 import pkg_resources
 from celery.schedules import crontab
 from flask import Blueprint
-from flask_appbuilder.security.manager import AUTH_DB
+from flask_appbuilder.security.manager import AUTH_DB,AUTH_OAUTH
 from flask_caching.backends.base import BaseCache
 from pandas import Series
 from pandas._libs.parsers import STR_NA_VALUES
@@ -79,8 +79,6 @@ STATS_LOGGER = DummyStatsLogger()
 
 # By default will log events to the metadata database with `DBEventLogger`
 # Note that you can use `StdOutEventLogger` for debugging
-# Note that you can write your own event logger by extending `AbstractEventLogger`
-# https://github.com/apache/superset/blob/master/superset/utils/log.py
 EVENT_LOGGER = DBEventLogger()
 
 SUPERSET_LOG_VIEW = True
@@ -107,7 +105,7 @@ PACKAGE_JSON_FILE = str(files("superset") / "static/assets/package.json")
 #     "type": "image/png"
 #     "rel": "icon"
 # },
-FAVICONS = [{"href": "/static/assets/images/favicon.png"}]
+FAVICONS = [{"href": "/static/assets/images/vxi-logo-2.png"}]
 
 
 def _try_json_readversion(filepath: str) -> str | None:
@@ -167,7 +165,7 @@ DEFAULT_TIME_FILTER = NO_TIME_RANGE
 # [load balancer / proxy / envoy / kong / ...] timeout settings.
 # You should also make sure to configure your WSGI server
 # (gunicorn, nginx, apache, ...) timeout setting to be <= to this setting
-SUPERSET_WEBSERVER_TIMEOUT = int(timedelta(minutes=1).total_seconds())
+SUPERSET_WEBSERVER_TIMEOUT = int(timedelta(minutes=5).total_seconds())
 
 # this 2 settings are used by dashboard period force refresh feature
 # When user choose auto force refresh frequency
@@ -186,22 +184,15 @@ SQLALCHEMY_TRACK_MODIFICATIONS = False
 # or use `SUPERSET_SECRET_KEY` environment variable.
 # Use a strong complex alphanumeric string and use a tool to help you generate
 # a sufficiently random sequence, ex: openssl rand -base64 42"
-SECRET_KEY = os.environ.get("SUPERSET_SECRET_KEY") or CHANGE_ME_SECRET_KEY
+#SECRET_KEY = os.environ.get("SUPERSET_SECRET_KEY") or CHANGE_ME_SECRET_KEY
 
 # The SQLAlchemy connection string.
-SQLALCHEMY_DATABASE_URI = (
-    f"""sqlite:///{os.path.join(DATA_DIR, "superset.db")}?check_same_thread=false"""
-)
+#SQLALCHEMY_DATABASE_URI = (
+#    f"""sqlite:///{os.path.join(DATA_DIR, "superset.db")}?check_same_thread=false"""
+#)
 
 # SQLALCHEMY_DATABASE_URI = 'mysql://myapp@localhost/myapp'
 # SQLALCHEMY_DATABASE_URI = 'postgresql://root:password@localhost/myapp'
-
-# The default MySQL isolation level is REPEATABLE READ whereas the default PostgreSQL
-# isolation level is READ COMMITTED. All backends should use READ COMMITTED (or similar)
-# to help ensure consistent behavior.
-SQLALCHEMY_ENGINE_OPTIONS = {
-    "isolation_level": "SERIALIZABLE",  # SQLite does not support READ COMMITTED.
-}
 
 # In order to hook up a custom password store for all SQLALCHEMY connections
 # implement a function that takes a single argument of type 'sqla.engine.url',
@@ -261,7 +252,7 @@ WTF_CSRF_EXEMPT_LIST = [
 ]
 
 # Whether to run the web server in debug mode or not
-DEBUG = parse_boolean_string(os.environ.get("FLASK_DEBUG"))
+DEBUG = os.environ.get("FLASK_DEBUG")
 FLASK_USE_RELOAD = True
 
 # Enable profiling of Python calls. Turn this on and append ``?_instrument=1``
@@ -275,7 +266,7 @@ SHOW_STACKTRACE = False
 
 # Use all X-Forwarded headers when ENABLE_PROXY_FIX is True.
 # When proxying to a different port, set "x_port" to 0 to avoid downstream issues.
-ENABLE_PROXY_FIX = False
+ENABLE_PROXY_FIX = True
 PROXY_FIX_CONFIG = {"x_for": 1, "x_proto": 1, "x_host": 1, "x_port": 1, "x_prefix": 1}
 
 # Configuration for scheduling queries from SQL Lab.
@@ -285,7 +276,7 @@ SCHEDULED_QUERIES: dict[str, Any] = {}
 # feature is on by default to make Superset secure by default, but you should
 # fine tune the limits to your needs. You can read more about the different
 # parameters here: https://flask-limiter.readthedocs.io/en/stable/configuration.html
-RATELIMIT_ENABLED = os.environ.get("SUPERSET_ENV") == "production"
+RATELIMIT_ENABLED = True
 RATELIMIT_APPLICATION = "50 per second"
 AUTH_RATE_LIMITED = True
 AUTH_RATE_LIMIT = "5 per second"
@@ -299,10 +290,10 @@ AUTH_RATE_LIMIT = "5 per second"
 # GLOBALS FOR APP Builder
 # ------------------------------
 # Uncomment to setup Your App name
-APP_NAME = "Superset"
+APP_NAME = "VXI CX IaaS"
 
 # Specify the App icon
-APP_ICON = "/static/assets/images/superset-logo-horiz.png"
+APP_ICON = "/static/assets/images/vxi-logo.jpg"
 
 # Specify where clicking the logo would take the user'
 # Default value of None will take you to '/superset/welcome'
@@ -328,7 +319,32 @@ FAB_API_SWAGGER_UI = True
 # AUTH_DB : Is for database (username/password)
 # AUTH_LDAP : Is for LDAP
 # AUTH_REMOTE_USER : Is for using REMOTE_USER from web server
-AUTH_TYPE = AUTH_DB
+# AUTH_TYPE = AUTH_DB
+
+AUTH_TYPE = AUTH_OAUTH
+
+#CUSTOM_SECURITY_MANAGER = CustomSsoSecurityManager
+
+OAUTH_PROVIDERS = [
+{
+    "name": "azure",
+    "icon": "fa-windows",
+    "token_key": "access_token",
+    "remote_app": {
+        "client_id": os.environ.get("SSO_CLIENT_ID"),
+        "client_secret": os.environ.get("SSO_CLIENT_SECRET"),
+        "api_base_url": os.environ.get("SSO_URL") + "oauth2",
+        "client_kwargs": {
+            "scope": "User.read name preferred_username email profile upn",
+            "resource": os.environ.get("SSO_CLIENT_ID"),
+            "verify_signature": False
+        },
+        "request_token_url": None,
+        "access_token_url": os.environ.get("SSO_URL") + "oauth2/token",
+        "authorize_url": os.environ.get("SSO_URL") + "oauth2/authorize",
+    },
+},
+]
 
 # Uncomment to setup Full admin role name
 # AUTH_ROLE_ADMIN = 'Admin'
@@ -336,11 +352,14 @@ AUTH_TYPE = AUTH_DB
 # Uncomment to setup Public role name, no authentication needed
 # AUTH_ROLE_PUBLIC = 'Public'
 
+PUBLIC_ROLE_LIKE_GAMMA = True
+
 # Will allow user self registration
-# AUTH_USER_REGISTRATION = True
+AUTH_USER_REGISTRATION = True
 
 # The default user self registration role
-# AUTH_USER_REGISTRATION_ROLE = "Public"
+AUTH_USER_REGISTRATION_ROLE = os.environ.get("SSO_DEFAULT_ROLE") 
+# AUTH_USER_REGISTRATION_ROLE = "Alpha"
 
 # When using LDAP Auth, setup the LDAP server
 # AUTH_LDAP_SERVER = "ldap://ldapserver.new"
@@ -452,24 +471,24 @@ CURRENCIES = ["USD", "EUR", "GBP", "INR", "MXN", "JPY", "CNY"]
 DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     # When using a recent version of Druid that supports JOINs turn this on
     "DRUID_JOINS": False,
-    "DYNAMIC_PLUGINS": False,
+    "DYNAMIC_PLUGINS": True,
     # With Superset 2.0, we are updating the default so that the legacy datasource
     # editor no longer shows. Currently this is set to false so that the editor
     # option does show, but we will be depreciating it.
     "DISABLE_LEGACY_DATASOURCE_EDITOR": True,
-    "ENABLE_TEMPLATE_PROCESSING": False,
+    "ENABLE_TEMPLATE_PROCESSING": True,
     # Allow for javascript controls components
     # this enables programmers to customize certain charts (like the
     # geospatial ones) by inputting javascript in controls. This exposes
     # an XSS security vulnerability
-    "ENABLE_JAVASCRIPT_CONTROLS": False,  # deprecated
-    "KV_STORE": False,  # deprecated
+    "ENABLE_JAVASCRIPT_CONTROLS": True,
+    "KV_STORE": False,
     # When this feature is enabled, nested types in Presto will be
     # expanded into extra columns and/or arrays. This is experimental,
     # and doesn't work with all nested types.
     "PRESTO_EXPAND_DATA": False,
     # Exposes API endpoint to compute thumbnails
-    "THUMBNAILS": False,
+    "THUMBNAILS": True,
     "SHARE_QUERIES_VIA_KV_STORE": False,
     "TAGGING_SYSTEM": False,
     "SQLLAB_BACKEND_PERSISTENCE": True,
@@ -479,12 +498,13 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     "DASHBOARD_CROSS_FILTERS": True,  # deprecated
     "DASHBOARD_VIRTUALIZATION": True,
     "GLOBAL_ASYNC_QUERIES": False,
-    "EMBEDDED_SUPERSET": False,
+    "VERSIONED_EXPORT": True,  # deprecated
+    "EMBEDDED_SUPERSET": True,
     # Enables Alerts and reports new implementation
-    "ALERT_REPORTS": False,
-    "ALERT_REPORT_TABS": False,
+    "ALERT_REPORTS": True,
+    "ALERT_REPORT_TABS": True,
+    "DASHBOARD_RBAC": True,
     "ALERT_REPORT_SLACK_V2": False,
-    "DASHBOARD_RBAC": False,
     "ENABLE_ADVANCED_DATA_TYPES": False,
     # Enabling ALERTS_ATTACH_REPORTS, the system sends email and slack message
     # with screenshot and link
@@ -495,14 +515,13 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     "ALERTS_ATTACH_REPORTS": True,
     # Allow users to export full CSV of table viz type.
     # This could cause the server to run out of memory or compute.
-    "ALLOW_FULL_CSV_EXPORT": False,
-    "ALLOW_ADHOC_SUBQUERY": False,
-    "USE_ANALAGOUS_COLORS": False,
+    "ALLOW_FULL_CSV_EXPORT": True,
+    "GENERIC_CHART_AXES": True,  # deprecated
+    "ALLOW_ADHOC_SUBQUERY": True,
+    "USE_ANALAGOUS_COLORS": True,
     # Apply RLS rules to SQL Lab queries. This requires parsing and manipulating the
     # query, and might break queries and/or allow users to bypass RLS. Use with care!
-    "RLS_IN_SQLLAB": False,
-    # When impersonating a user, use the email prefix instead of the username
-    "IMPERSONATE_WITH_EMAIL_PREFIX": False,
+    "RLS_IN_SQLLAB": True,
     # Enable caching per impersonation key (e.g username) in a datasource where user
     # impersonation is enabled
     "CACHE_IMPERSONATION": False,
@@ -512,19 +531,21 @@ DEFAULT_FEATURE_FLAGS: dict[str, bool] = {
     "EMBEDDABLE_CHARTS": True,
     "DRILL_TO_DETAIL": True,
     "DRILL_BY": True,
-    "DATAPANEL_CLOSED_BY_DEFAULT": False,
-    "HORIZONTAL_FILTER_BAR": False,
+    "DATAPANEL_CLOSED_BY_DEFAULT": True,
+    "HORIZONTAL_FILTER_BAR": True,
     # The feature is off by default, and currently only supported in Presto and Postgres,
     # and Bigquery.
     # It also needs to be enabled on a per-database basis, by adding the key/value pair
     # `cost_estimate_enabled: true` to the database `extra` attribute.
-    "ESTIMATE_QUERY_COST": False,
+    "ESTIMATE_QUERY_COST": True,
     # Allow users to enable ssh tunneling when creating a DB.
     # Users must check whether the DB engine supports SSH Tunnels
     # otherwise enabling this flag won't have any effect on the DB.
     "SSH_TUNNELING": False,
     "AVOID_COLORS_COLLISION": True,
-    # Do not show user info in the menu
+    # Set to False to only allow viewing own recent activity
+    # or to disallow users from viewing other users profile page
+    # Do not show user info or profile in the menu
     "MENU_HIDE_USER_INFO": False,
     # Allows users to add a ``superset://`` DB that can query across databases. This is
     # an experimental feature with potential security and performance risks, so use with
@@ -630,7 +651,17 @@ COMMON_BOOTSTRAP_OVERRIDES_FUNC: Callable[  # noqa: E731
 #     }]
 
 # This is merely a default
-EXTRA_CATEGORICAL_COLOR_SCHEMES: list[dict[str, Any]] = []
+#EXTRA_CATEGORICAL_COLOR_SCHEMES: list[dict[str, Any]] = []
+
+EXTRA_CATEGORICAL_COLOR_SCHEMES = [
+{
+         "id": 'vxiGlobalSolutionColours',
+         "description": '',
+         "label": 'VXI Brand Color Palette',
+         "colors":
+          ['#ff6d10','#f59259','#fab691','#fcdbc8','#353535','#707070','#bfbfbf','#184169','#4f6f8b','#8a9fb4','#c6cfd8','#379946','#66b277','#9bcba3','#991D20',
+                             '#b25357','#cf8e8b','#462f85','#7360a2','#a098c1','#eca921','#fecd04','#f1bc5a','#ffe681']
+}]
 
 # THEME_OVERRIDES is used for adding custom theme to superset
 # example code for "My theme" custom scheme
@@ -741,15 +772,34 @@ IMG_UPLOAD_URL = "/static/uploads/"
 # Setup image size default is (300, 200, True)
 # IMG_SIZE = (300, 200, True)
 
+REDIS_HOST = os.getenv("REDISHOST", "")
+REDIS_PORT = os.getenv("REDISPORT", "")
+REDIS_CELERY_DB = os.getenv("REDIS_CELERY_DB", "")
+REDIS_RESULTS_DB = os.getenv("REDIS_RESULTS_DB", "")
+
 # Default cache timeout, applies to all cache backends unless specifically overridden in
 # each cache config.
 CACHE_DEFAULT_TIMEOUT = int(timedelta(days=1).total_seconds())
 
 # Default cache for Superset objects
-CACHE_CONFIG: CacheConfig = {"CACHE_TYPE": "NullCache"}
+#CACHE_CONFIG: CacheConfig = {"CACHE_TYPE": "NullCache"}
 
 # Cache for datasource metadata and query results
-DATA_CACHE_CONFIG: CacheConfig = {"CACHE_TYPE": "NullCache"}
+#DATA_CACHE_CONFIG: CacheConfig = {"CACHE_TYPE": "NullCache"}
+
+CACHE_CONFIG = {"CACHE_TYPE": "NullCache"}
+DATA_CACHE_CONFIG = CACHE_CONFIG
+
+if REDIS_HOST != "":
+    CACHE_CONFIG = {
+    "CACHE_TYPE": "RedisCache",
+    "CACHE_DEFAULT_TIMEOUT": 300,
+    "CACHE_KEY_PREFIX": "superset_",
+    "CACHE_REDIS_HOST": REDIS_HOST,
+    "CACHE_REDIS_PORT": REDIS_PORT,
+    "CACHE_REDIS_DB": REDIS_RESULTS_DB,
+    }
+    DATA_CACHE_CONFIG = CACHE_CONFIG
 
 # Cache for dashboard filter state. `CACHE_TYPE` defaults to `SupersetMetastoreCache`
 # that stores the values in the key-value table in the Superset metastore, as it's
@@ -790,7 +840,7 @@ CORS_OPTIONS: dict[Any, Any] = {}
 # Disabling this option is not recommended for security reasons. If you wish to allow
 # valid safe elements that are not included in the default sanitization schema, use the
 # HTML_SANITIZATION_SCHEMA_EXTENSIONS configuration.
-HTML_SANITIZATION = True
+HTML_SANITIZATION = False
 
 # Use this configuration to extend the HTML sanitization schema.
 # By default we use the GitHub schema defined in
@@ -806,7 +856,14 @@ HTML_SANITIZATION = True
 #   }
 # }
 # Be careful when extending the default schema to avoid XSS attacks.
-HTML_SANITIZATION_SCHEMA_EXTENSIONS: dict[str, Any] = {}
+#HTML_SANITIZATION_SCHEMA_EXTENSIONS: dict[str, Any] = {}
+
+HTML_SANITIZATION_SCHEMA_EXTENSIONS = {
+  "attributes": {
+    "*": ["style","className"],
+  },
+  "tagNames": ["style"],
+}
 
 # Chrome allows up to 6 open connections per domain at a time. When there are more
 # than 6 slices in dashboard, a lot of time fetch requests are queued up and wait for
@@ -898,7 +955,7 @@ LOGGING_CONFIGURATOR = DefaultLoggingConfigurator()
 # Console Log Settings
 
 LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
-LOG_LEVEL = logging.DEBUG if DEBUG else logging.INFO
+LOG_LEVEL = logging.INFO
 
 # ---------------------------------------------------
 # Enable Time Rotate Log Handler
@@ -906,7 +963,7 @@ LOG_LEVEL = logging.DEBUG if DEBUG else logging.INFO
 # LOG_LEVEL = DEBUG, INFO, WARNING, ERROR, CRITICAL
 
 ENABLE_TIME_ROTATE = False
-TIME_ROTATE_LOG_LEVEL = logging.DEBUG if DEBUG else logging.INFO
+TIME_ROTATE_LOG_LEVEL = logging.INFO
 FILENAME = os.path.join(DATA_DIR, "superset.log")
 ROLLOVER = "midnight"
 INTERVAL = 1
@@ -972,6 +1029,27 @@ CELERY_BEAT_SCHEDULER_EXPIRES = timedelta(weeks=1)
 # you'll want to use a proper broker as specified here:
 # https://docs.celeryq.dev/en/stable/getting-started/backends-and-brokers/index.html
 
+class CeleryConfigProd:
+    broker_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}"
+    imports = ("superset.sql_lab","superset.tasks.scheduler",)
+    result_backend = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULTS_DB}"
+    worker_prefetch_multiplier = 10
+    task_acks_late = True
+    task_annotations = {
+        "sql_lab.get_sql_results": {
+            "rate_limit": "100/s",
+        },
+    }
+    beat_schedule = {
+        "reports.scheduler": {
+            "task": "reports.scheduler",
+            "schedule": crontab(minute="*", hour="*"),
+        },
+        "reports.prune_log": {
+            "task": "reports.prune_log",
+            "schedule": crontab(minute=10, hour=0),
+        },
+    }
 
 class CeleryConfig:  # pylint: disable=too-few-public-methods
     broker_url = "sqla+sqlite:///celerydb.sqlite"
@@ -996,8 +1074,12 @@ class CeleryConfig:  # pylint: disable=too-few-public-methods
         },
     }
 
+CELERY_CONFIG = CeleryConfig
 
-CELERY_CONFIG: type[CeleryConfig] = CeleryConfig
+if REDIS_HOST != "":
+    CELERY_CONFIG = CeleryConfigProd
+  
+# pylint: disable=invalid-name
 
 # Set celery config to None to disable all the above configuration
 # CELERY_CONFIG = None
@@ -1010,7 +1092,8 @@ CELERY_CONFIG: type[CeleryConfig] = CeleryConfig
 # OVERRIDE_HTTP_HEADERS: sets override values for HTTP headers. These values will
 # override anything set within the app
 DEFAULT_HTTP_HEADERS: dict[str, Any] = {}
-OVERRIDE_HTTP_HEADERS: dict[str, Any] = {}
+#OVERRIDE_HTTP_HEADERS: dict[str, Any] = {}
+OVERRIDE_HTTP_HEADERS = {'X-Frame-Options': 'ALLOWALL'}
 HTTP_HEADERS: dict[str, Any] = {}
 
 # The db id here results in selecting this one as a default in SQL Lab
@@ -1169,13 +1252,14 @@ CONFIG_PATH_ENV_VAR = "SUPERSET_CONFIG_PATH"
 FLASK_APP_MUTATOR = None
 
 # smtp server configuration
-SMTP_HOST = "localhost"
+EMAIL_NOTIFICATIONS = False  # all the emails are sent using dryrun
+SMTP_HOST = os.environ.get("SMTP_HOST") 
 SMTP_STARTTLS = True
 SMTP_SSL = False
-SMTP_USER = "superset"
-SMTP_PORT = 25
-SMTP_PASSWORD = "superset"
-SMTP_MAIL_FROM = "superset@superset.com"
+SMTP_USER = os.environ.get("SMTP_USER")
+SMTP_PORT = os.environ.get("SMTP_PORT")
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD")
+SMTP_MAIL_FROM = os.environ.get("SMTP_MAIL_FROM")
 # If True creates a default SSL context with ssl.Purpose.CLIENT_AUTH using the
 # default system root CA certificates.
 SMTP_SSL_SERVER_AUTH = False
@@ -1218,7 +1302,7 @@ BLUEPRINTS: list[Blueprint] = []
 #       lambda url, query: url if is_fresh(query) else None
 #   )
 # pylint: disable-next=unnecessary-lambda-assignment
-TRACKING_URL_TRANSFORMER = lambda url: url  # noqa: E731
+TRACKING_URL_TRANSFORMER = lambda url: url
 
 
 # customize the polling time of each engine
@@ -1292,7 +1376,7 @@ DISALLOWED_SQL_FUNCTIONS: dict[str, set[str]] = {
 
 
 # A function that intercepts the SQL to be executed and can alter it.
-# A common use case for this is around adding some sort of comment header to the SQL
+# The use case is can be around adding some sort of comment header
 # with information such as the username and worker node information
 #
 #    def SQL_QUERY_MUTATOR(
@@ -1302,12 +1386,9 @@ DISALLOWED_SQL_FUNCTIONS: dict[str, set[str]] = {
 #    ):
 #        dttm = datetime.now().isoformat()
 #        return f"-- [SQL LAB] {user_name} {dttm}\n{sql}"
-#
-# NOTE: For backward compatibility, you can unpack any of the above arguments in your
+# For backward compatibility, you can unpack any of the above arguments in your
 # function definition, but keep the **kwargs as the last argument to allow new args
 # to be added later without any errors.
-# NOTE: whatever you in this function DOES NOT affect the cache key, so ideally this function
-# is "functional", as in deterministic from its input.
 def SQL_QUERY_MUTATOR(  # pylint: disable=invalid-name,unused-argument
     sql: str, **kwargs: Any
 ) -> str:
@@ -1443,7 +1524,7 @@ WEBDRIVER_CONFIGURATION: dict[Any, Any] = {"service_log_path": "/dev/null"}
 WEBDRIVER_OPTION_ARGS = ["--headless"]
 
 # The base URL to query for accessing the user interface
-WEBDRIVER_BASEURL = "http://0.0.0.0:8080/"
+WEBDRIVER_BASEURL = "http://0.0.0.0:8088/"
 # The base URL for the email report hyperlinks.
 WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
 # Time selenium will wait for the page to load and render for the email report.
@@ -1525,7 +1606,8 @@ DATABASE_OAUTH2_TIMEOUT = timedelta(seconds=30)
 CONTENT_SECURITY_POLICY_WARNING = True
 
 # Do you want Talisman enabled?
-TALISMAN_ENABLED = utils.cast_to_boolean(os.environ.get("TALISMAN_ENABLED", True))
+#TALISMAN_ENABLED = utils.cast_to_boolean(os.environ.get("TALISMAN_ENABLED", True))
+TALISMAN_ENABLED = False
 
 # If you want Talisman, how do you want it configured??
 TALISMAN_CONFIG = {
@@ -1596,9 +1678,10 @@ TALISMAN_DEV_CONFIG = {
 #
 SESSION_COOKIE_HTTPONLY = True  # Prevent cookie from being read by frontend JS?
 SESSION_COOKIE_SECURE = False  # Prevent cookie from being transmitted over non-tls?
-SESSION_COOKIE_SAMESITE: Literal["None", "Lax", "Strict"] | None = "Lax"
+# SESSION_COOKIE_SAMESITE: Literal["None", "Lax", "Strict"] | None = "Lax"
 # Whether to use server side sessions from flask-session or Flask secure cookies
 SESSION_SERVER_SIDE = False
+SESSION_COOKIE_SAMESITE = None
 # Example config using Redis as the backend for server side sessions
 # from flask_session import RedisSessionInterface
 #
@@ -1614,7 +1697,12 @@ SEND_FILE_MAX_AGE_DEFAULT = int(timedelta(days=365).total_seconds())
 
 # URI to database storing the example data, points to
 # SQLALCHEMY_DATABASE_URI by default if set to `None`
-SQLALCHEMY_EXAMPLES_URI = "sqlite:///" + os.path.join(DATA_DIR, "examples.db")
+#SQLALCHEMY_EXAMPLES_URI = "sqlite:///" + os.path.join(DATA_DIR, "examples.db")
+
+SECRET_KEY = 'KXynOfGkX99xLX3Gi9mpc98sThF4MAr1'
+
+# The SQLAlchemy connection string.
+SQLALCHEMY_DATABASE_URI = os.environ.get("SUPERSET_SQL_URL") 
 
 # Optional prefix to be added to all static asset paths when rendering the UI.
 # This is useful for hosting assets in an external CDN, for example
