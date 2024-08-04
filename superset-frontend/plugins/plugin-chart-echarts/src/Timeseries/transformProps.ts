@@ -277,19 +277,6 @@ export default function transformProps(
   const offsetLineWidths = {};
 
   rawSeries.forEach(entry => {
-    let position = 'top';
-
-    // @ts-ignore
-    const hasNegativeValue = entry.data[0].some((value: number) => value < 0);
-
-    if (isHorizontal) {
-      // @ts-ignore
-      position = hasNegativeValue ? 'left' : 'right';
-    } else {
-      // @ts-ignore
-      position = hasNegativeValue ? 'bottom' : 'top';
-    }
-
     const derivedSeries = isDerivedSeries(entry, chartProps.rawFormData);
     const lineStyle: LineStyleOption = {};
     if (derivedSeries) {
@@ -338,7 +325,6 @@ export default function transformProps(
         richTooltip,
         sliceId,
         isHorizontal,
-        position,
         lineStyle,
         timeCompare: array,
       },
@@ -546,7 +532,6 @@ export default function transformProps(
       ...getDefaultTooltip(refs),
       show: !inContextMenu,
       trigger: richTooltip ? 'axis' : 'item',
-      position: 'bottom',
       formatter: (params: any) => {
         const [xIndex, yIndex] = isHorizontal ? [1, 0] : [0, 1];
         const xValue: number = richTooltip
