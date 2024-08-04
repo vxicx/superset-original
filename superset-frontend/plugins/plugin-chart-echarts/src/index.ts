@@ -34,7 +34,6 @@ export { default as EchartsFunnelChartPlugin } from './Funnel';
 export { default as EchartsTreeChartPlugin } from './Tree';
 export { default as EchartsHeatmapChartPlugin } from './Heatmap';
 export { default as EchartsTreemapChartPlugin } from './Treemap';
-export { default as ParetoChartPlugin } from './Pareto';
 export {
   BigNumberChartPlugin,
   BigNumberTotalChartPlugin,
