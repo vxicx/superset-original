@@ -31,7 +31,7 @@ const assetsConfig = {
     `${workspaceDirectory}/superset-frontend/*.json`,
   ],
   // dont use restore keys as it may give an invalid older build
-  restoreKeys: '',
+  restoreKeys: "",
 };
 
 // Multi-layer cache definition
@@ -48,7 +48,7 @@ module.exports = {
   // use separate cache for instrumented JS files and regular assets
   // one is built with `npm run build`,
   // another is built with `npm run build-instrumented`
-  'instrumented-assets': assetsConfig,
+  "instrumented-assets": assetsConfig,
   cypress: {
     path: [`${homeDirectory}/.cache/Cypress`],
     hashFiles: [

@@ -6,7 +6,7 @@ title: "[SIP] Your Title Here (do not add SIP number)"
 assignees: "apache/superset-committers"
 ---
 
-*Please make sure you are familiar with the SIP process documented*
+_Please make sure you are familiar with the SIP process documented_
 [here](https://github.com/apache/superset/issues/5602). The SIP will be numbered by a committer upon acceptance.
 
 ## [SIP] Proposal for ...<title>

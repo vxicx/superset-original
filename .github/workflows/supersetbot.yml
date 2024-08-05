@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       comment_body:
-        description: 'Comment Body'
+        description: "Comment Body"
         required: true
         type: string
 

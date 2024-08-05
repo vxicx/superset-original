@@ -7,7 +7,6 @@ ASF [vulnerability handling process](https://apache.org/security/#vulnerability-
 
 **⚠️ Please do not file GitHub issues for security vulnerabilities as they are public! ⚠️**
 
-
 Apache Software Foundation takes a rigorous standpoint in annihilating the security issues
 in its software projects. Apache Superset is highly sensitive and forthcoming to issues
 pertaining to its features and functionality.
@@ -19,6 +18,7 @@ More details can be found on the ASF website at
 [ASF vulnerability reporting process](https://apache.org/security/#reporting-a-vulnerability)
 
 We kindly ask you to include the following information in your report:
+
 - Apache Superset version that you are using
 - A sanitized copy of your `superset_config.py` file or any config overrides
 - Detailed steps to reproduce the vulnerability
@@ -33,6 +33,6 @@ by extending the image itself.
 
 ## Extra Information
 
- - [Apache Superset documentation](https://superset.apache.org/docs/security)
- - [Common Vulnerabilities and Exposures by release](https://superset.apache.org/docs/security/cves)
- - [How Security Vulnerabilities are Reported & Handled in Apache Superset (Blog)](https://preset.io/blog/how-security-vulnerabilities-are-reported-and-handled-in-apache-superset/)
+- [Apache Superset documentation](https://superset.apache.org/docs/security)
+- [Common Vulnerabilities and Exposures by release](https://superset.apache.org/docs/security/cves)
+- [How Security Vulnerabilities are Reported & Handled in Apache Superset (Blog)](https://preset.io/blog/how-security-vulnerabilities-are-reported-and-handled-in-apache-superset/)

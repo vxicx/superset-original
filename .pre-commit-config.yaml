@@ -75,7 +75,7 @@ repos:
     rev: v0.4.0
     hooks:
       - id: ruff
-        args: [ --fix ]
+        args: [--fix]
       - id: ruff-format
   - repo: local
     hooks:
@@ -85,8 +85,7 @@ repos:
         language: system
         types: [python]
         exclude: ^(tests/|superset/migrations/|scripts/|RELEASING/|docker/)
-        args:
-          [
+        args: [
             "-rn", # Only display messages
             "-sn", # Don't display the score
             "--rcfile=.pylintrc",

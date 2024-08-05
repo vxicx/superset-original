@@ -28,6 +28,7 @@ ARG NPM_BUILD_CMD="build"
 
 RUN apt-get update -qq \
     && apt-get install -yqq --no-install-recommends \
+    && apt-get install -y git\
         build-essential \
         python3
 
@@ -44,6 +45,7 @@ RUN --mount=type=bind,target=./package.json,src=./superset-frontend/package.json
     npm ci
 
 COPY ./superset-frontend ./
+
 # This seems to be the most expensive step
 RUN npm run ${BUILD_CMD}
 

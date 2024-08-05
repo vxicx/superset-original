@@ -1,25 +1,25 @@
-name: 'Setup Python Environment'
-description: 'Set up Python and install dependencies with optional configurations.'
+name: "Setup Python Environment"
+description: "Set up Python and install dependencies with optional configurations."
 inputs:
   python-version:
     description: 'Python version to set up. Accepts a version number, "current", or "next".'
     required: true
-    default: 'current'
+    default: "current"
   cache:
-    description: 'Cache dependencies. Options: pip'
+    description: "Cache dependencies. Options: pip"
     required: false
-    default: 'pip'
+    default: "pip"
   requirements-type:
-    description: 'Type of requirements to install. Options: base, development, default'
+    description: "Type of requirements to install. Options: base, development, default"
     required: false
-    default: 'dev'
+    default: "dev"
   install-superset:
-    description: 'Whether to install Superset itself. If false, only python is installed'
+    description: "Whether to install Superset itself. If false, only python is installed"
     required: false
-    default: 'true'
+    default: "true"
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
     - name: Interpret Python Version
       id: set-python-version

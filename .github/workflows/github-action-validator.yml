@@ -9,7 +9,6 @@ on:
     types: [synchronize, opened, reopened, ready_for_review]
 
 jobs:
-
   validate-all-ghas:
     runs-on: ubuntu-22.04
     steps:
@@ -19,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: "18"
 
       - name: Install Dependencies
         run: npm install -g @action-validator/core @action-validator/cli --save-dev

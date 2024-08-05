@@ -24,7 +24,6 @@ jobs:
       pull-requests: write
       checks: write
     steps:
-
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
         uses: actions/checkout@v4
         with:

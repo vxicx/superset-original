@@ -16,11 +16,11 @@ on:
       force-latest:
         required: true
         type: choice
-        default: 'false'
+        default: "false"
         description: Whether to force a latest tag on the release
         options:
-          - 'true'
-          - 'false'
+          - "true"
+          - "false"
 jobs:
   config:
     runs-on: "ubuntu-22.04"
@@ -108,7 +108,6 @@ jobs:
       contents: read
       pull-requests: write
     steps:
-
       - name: "Checkout ${{ github.ref }} ( ${{ github.sha }} )"
         uses: actions/checkout@v4
         with:

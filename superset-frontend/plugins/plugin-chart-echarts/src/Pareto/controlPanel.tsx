@@ -17,13 +17,11 @@
  * under the License.
  */
 import { ensureIsArray, t } from '@superset-ui/core';
-import { cloneDeep } from 'lodash';
 import {
   ControlPanelConfig,
   ControlPanelSectionConfig,
   ControlSetRow,
   ControlSubSectionHeader,
-  CustomControlItem,
   getStandardizedControls,
   sections,
   sharedControls,
@@ -233,26 +231,6 @@ function createCustomizeSection(
   ];
 }
 
-function createAdvancedAnalyticsSection(
-  label: string,
-  controlSuffix: string,
-): ControlPanelSectionConfig {
-  const aaWithSuffix = cloneDeep(sections.advancedAnalyticsControls);
-  aaWithSuffix.label = label;
-  if (!controlSuffix) {
-    return aaWithSuffix;
-  }
-  aaWithSuffix.controlSetRows.forEach(row =>
-    row.forEach((control: CustomControlItem) => {
-      if (control?.name) {
-        // eslint-disable-next-line no-param-reassign
-        control.name = `${control.name}${controlSuffix}`;
-      }
-    }),
-  );
-  return aaWithSuffix;
-}
-
 const config: ControlPanelConfig = {
   controlPanelSections: [
     {
@@ -261,9 +239,24 @@ const config: ControlPanelConfig = {
       controlSetRows: [['x_axis'], ['time_grain_sqla']],
     },
     createQuerySection(t('Query A'), ''),
-    createAdvancedAnalyticsSection(t('Advanced analytics Query A'), ''),
     createQuerySection(t('Query B'), '_b'),
-    createAdvancedAnalyticsSection(t('Advanced analytics Query B'), '_b'),
+    {
+      label: t('Enable Cumulative Calculation'),
+      expanded: true,
+      controlSetRows: [
+        [
+          {
+            name: 'enableCumulativeMetricB',
+            config: {
+              type: 'CheckboxControl',
+              label: t('Cumulative for Metric B'),
+              default: false,
+              description: t('Enable cumulative calculation for Metric B'),
+            },
+          },
+        ],
+      ],
+    },
     sections.annotationsAndLayersControls,
     sections.titleControls,
     {

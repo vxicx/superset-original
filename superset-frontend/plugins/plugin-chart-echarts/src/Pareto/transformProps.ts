@@ -140,8 +140,9 @@ export default function transformProps(
     queriesData[0] as TimeseriesChartDataResponseResult;
   const { label_map: labelMapB } =
     queriesData[1] as TimeseriesChartDataResponseResult;
-  const data1 = (queriesData[0].data || []) as TimeseriesDataRecord[];
-  const data2 = (queriesData[1].data || []) as TimeseriesDataRecord[];
+  const data11 = (queriesData[0].data || []) as TimeseriesDataRecord[];
+  const data22 = (queriesData[1].data || []) as TimeseriesDataRecord[];
+
   const annotationData = getAnnotationData(chartProps);
   const coltypeMapping = {
     ...getColtypesMapping(queriesData[0]),
@@ -209,10 +210,6 @@ export default function transformProps(
   const refs: Refs = {};
   const colorScale = CategoricalColorNamespace.getScale(colorScheme as string);
 
-  console.log(data1);
-
-  console.log(data2);
-
   let xAxisLabel = getXAxisLabel(
     chartProps.rawFormData as QueryFormData,
   ) as string;
@@ -221,6 +218,102 @@ export default function transformProps(
     isDefined(verboseMap[xAxisLabel])
   ) {
     xAxisLabel = verboseMap[xAxisLabel];
+  }
+
+  const cumulativeEnabled = formData.enableCumulativeMetricB;
+
+  // Extract dynamic keys from formData
+  const xAxisKey = formData.xAxis;
+  // @ts-ignore
+  const metric1LabelKey = formData.metrics.label;
+  // @ts-ignore
+  const metric2LabelKey = formData.metricsB.label;
+
+  function joinData(data1: any[], data2: any[]): any[] {
+    const data2Map = new Map<string, number>();
+
+    // Map data2 to a dictionary for quick lookup using dynamic key
+    data2.forEach(item => {
+      data2Map.set(item[xAxisKey], item[metric2LabelKey]);
+    });
+
+    // Join data1 with data2 using the map and dynamic keys
+    return data1.map(item => ({
+      [xAxisKey]: item[xAxisKey],
+      [metric1LabelKey]: item[metric1LabelKey],
+      [metric2LabelKey]: data2Map.get(item[xAxisKey]) ?? 0,
+    }));
+  }
+
+  function calculatePareto(data: any[]): any[] {
+    // Sort by metric1_label in descending order
+    const sortedData = data.sort(
+      (a, b) => b[metric1LabelKey] - a[metric1LabelKey],
+    );
+
+    // Calculate cumulative values only for metric2_label
+    let cumulativeMetric2 = 0;
+
+    return sortedData.map(item => {
+      const metric1Value = item[metric1LabelKey];
+      const metric2Value = item[metric2LabelKey];
+
+      if (cumulativeEnabled) {
+        cumulativeMetric2 += metric2Value;
+      }
+
+      return {
+        [xAxisKey]: item[xAxisKey],
+        [metric1LabelKey]: metric1Value, // Metric1 is not cumulative
+        [metric2LabelKey]: cumulativeEnabled ? cumulativeMetric2 : metric2Value,
+      };
+    });
+  }
+
+  function splitParetoData(paretoData: any[]): { data1: any[]; data2: any[] } {
+    const data1Map = new Map<string, number>();
+    const data2Map = new Map<string, number>();
+
+    paretoData.forEach(item => {
+      const key = item[xAxisKey];
+      // For data1, store metric1_label values
+      data1Map.set(key, item[metric1LabelKey]);
+
+      // For data2, store metric2_label values
+      data2Map.set(key, item[metric2LabelKey]);
+    });
+
+    const data1 = Array.from(data1Map, ([key, value]) => ({
+      [xAxisKey]: key,
+      [metric1LabelKey]: value,
+    }));
+
+    const data2 = Array.from(data2Map, ([key, value]) => ({
+      [xAxisKey]: key,
+      [metric2LabelKey]: value,
+    }));
+
+    return { data1, data2 };
+  }
+
+  // Initialize data1 and data2 as empty arrays
+  let data1: any[] = [];
+  let data2: any[] = [];
+
+  // Check if cumulative is enabled
+  if (cumulativeEnabled) {
+    // Join the data
+    const joinedData = joinData(data11, data22);
+
+    // Calculate Pareto data
+    const paretoData = calculatePareto(joinedData);
+
+    // Split the Pareto data
+    ({ data1, data2 } = splitParetoData(paretoData));
+  } else {
+    // If cumulative is not enabled, use the data from queriesData
+    data1 = (queriesData[0].data || []) as any[];
+    data2 = (queriesData[1].data || []) as any[];
   }
 
   const rebasedDataA = rebaseForecastDatum(data1, verboseMap);
@@ -423,7 +516,7 @@ export default function transformProps(
 
   // Sort the data array by the numerical value at index 1
   // @ts-ignore
-  rawSeriesB[0].data.sort((a, b) => a[1] - b[1]);
+  rawSeriesB[0].data.sort((a, b) => b[1] - a[1]);
 
   rawSeriesB.forEach(entry => {
     const entryName = String(entry.name || '');

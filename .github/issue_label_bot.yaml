@@ -1,5 +1,5 @@
 # for Issue Label Bot https://github.com/marketplace/issue-label-bot
 label-alias:
-  bug: '#bug'
-  feature_request: '#enhancement'
-  question: '#question'
+  bug: "#bug"
+  feature_request: "#enhancement"
+  question: "#question"
