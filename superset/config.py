@@ -1699,7 +1699,7 @@ SEND_FILE_MAX_AGE_DEFAULT = int(timedelta(days=365).total_seconds())
 # SQLALCHEMY_DATABASE_URI by default if set to `None`
 #SQLALCHEMY_EXAMPLES_URI = "sqlite:///" + os.path.join(DATA_DIR, "examples.db")
 
-SECRET_KEY = 'KXynOfGkX99xLX3Gi9mpc98sThF4MAr1'
+SECRET_KEY = os.environ.get("SUPERSET_APP_SECRET_KEY") 
 
 # The SQLAlchemy connection string.
 SQLALCHEMY_DATABASE_URI = os.environ.get("SUPERSET_SQL_URL") 
