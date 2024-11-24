@@ -516,7 +516,7 @@ export default function transformProps(
 
   // Sort the data array by the numerical value at index 1
   // @ts-ignore
-  rawSeriesB[0].data.sort((a, b) => b[1] - a[1]);
+  // rawSeriesB[0].data.sort((a, b) => a[1] - b[1]);
 
   rawSeriesB.forEach(entry => {
     const entryName = String(entry.name || '');

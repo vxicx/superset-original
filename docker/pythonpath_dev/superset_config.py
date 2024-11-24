@@ -99,6 +99,19 @@ WEBDRIVER_BASEURL = "http://superset:8088/"  # When using docker compose baseurl
 WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
 SQLLAB_CTAS_NO_LIMIT = True
 
+SESSION_COOKIE_SAMESITE = None
+SESSION_COOKIE_SECURE = True
+
+ENABLE_CORS = True
+CORS_OPTIONS = {
+    'supports_credentials': True,
+    'allow_headers': ['Content-Type', 'Authorization', 'X-CSRFToken'],  # Be explicit instead of '*'
+    'origins': ['http://localhost:3000','https://copilot-frontend-internal-prod-5juwycv3iq-uc.a.run.app/','https://copilot-frontend-v1-5juwycv3iq-uc.a.run.app/','https://copilot-frontend-stage-5juwycv3iq-uc.a.run.app/'],  # Must be explicit, no '*'
+    'methods': ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    'credentials': True,
+    'expose_headers': ['Content-Type', 'X-CSRFToken']
+}
+
 #
 # Optionally import superset_config_docker.py (which will have been included on
 # the PYTHONPATH) in order to allow for local settings to be overridden

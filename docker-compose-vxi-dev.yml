@@ -1,0 +1,51 @@
+version: '2.1'
+
+x-superset-volumes: &superset-volumes
+  - ./docker:/app/docker
+  - ./superset:/app/superset
+  - ./superset-frontend:/app/superset-frontend
+  - superset_home:/app/superset_home
+  - ./tests:/app/tests
+
+services:
+  superset:
+    image: superset-local:0.0.33
+    container_name: superset_app
+    command: ["/app/docker/docker-bootstrap.sh", "app"]
+    restart: unless-stopped
+    ports:
+      - 8088:80
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    user: "root"
+    volumes: *superset-volumes
+    environment:
+      CYPRESS_CONFIG: "${CYPRESS_CONFIG:-}"
+    env_file:
+      - docker/.env
+
+  superset-init:
+    image: superset-local:0.0.33
+    container_name: superset_init
+    command: ["/app/docker/docker-init.sh"]
+    user: "root"
+    volumes: *superset-volumes
+    environment:
+      CYPRESS_CONFIG: "${CYPRESS_CONFIG:-}"
+    env_file:
+      - docker/.env
+
+  superset-node:
+    image: node:18
+    environment:
+      BUILD_SUPERSET_FRONTEND_IN_DOCKER: "true"
+      SCARF_ANALYTICS: "${SCARF_ANALYTICS:-}"
+    container_name: superset_node
+    command: ["/app/docker/docker-frontend.sh"]
+    volumes: *superset-volumes
+    env_file:
+      - docker/.env
+
+volumes:
+  superset_home:
+    external: false

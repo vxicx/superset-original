@@ -116,6 +116,18 @@ class Dashboard extends PureComponent {
         ts: new Date().getTime(),
       };
     }
+
+    // Inside iframe page: Send height to parent
+    function sendHeightToParent() {
+      const height = document.body.scrollHeight; // Get the height of iframe content
+      // eslint-disable-next-line no-restricted-globals
+      parent.postMessage({ type: 'setHeight', height }, '*'); // Send message to parent
+    }
+
+    // Send height on load and resize events
+    window.addEventListener('load', sendHeightToParent);
+    window.addEventListener('resize', sendHeightToParent);
+
     window.addEventListener('visibilitychange', this.onVisibilityChange);
     this.applyCharts();
   }

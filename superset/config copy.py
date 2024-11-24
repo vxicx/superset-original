@@ -63,7 +63,6 @@ from superset.utils.core import is_test, NO_TIME_RANGE, parse_boolean_string
 from superset.utils.encrypt import SQLAlchemyUtilsAdapter
 from superset.utils.log import DBEventLogger
 from superset.utils.logging_configurator import DefaultLoggingConfigurator
-from cachelib.redis import RedisCache
 
 logger = logging.getLogger(__name__)
 
@@ -773,11 +772,10 @@ IMG_UPLOAD_URL = "/static/uploads/"
 # Setup image size default is (300, 200, True)
 # IMG_SIZE = (300, 200, True)
 
-REDIS_HOST = os.getenv("REDISHOST", "localhost")
-REDIS_PORT = os.getenv("REDISPORT", "6379")
-REDIS_CELERY_DB = os.getenv("REDIS_CELERY_DB", "7")
-REDIS_RESULTS_DB = os.getenv("REDIS_RESULTS_DB", "8")
-REDIS_CACHE_DB = os.getenv("REDIS_CACHE_DB", "9")
+REDIS_HOST = os.getenv("REDISHOST", "")
+REDIS_PORT = os.getenv("REDISPORT", "")
+REDIS_CELERY_DB = os.getenv("REDIS_CELERY_DB", "")
+REDIS_RESULTS_DB = os.getenv("REDIS_RESULTS_DB", "")
 
 # Default cache timeout, applies to all cache backends unless specifically overridden in
 # each cache config.
@@ -797,7 +795,9 @@ if REDIS_HOST != "":
     "CACHE_TYPE": "RedisCache",
     "CACHE_DEFAULT_TIMEOUT": 300,
     "CACHE_KEY_PREFIX": "superset_",
-    "CACHE_REDIS_URL": f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CACHE_DB}",
+    "CACHE_REDIS_HOST": REDIS_HOST,
+    "CACHE_REDIS_PORT": REDIS_PORT,
+    "CACHE_REDIS_DB": REDIS_RESULTS_DB,
     }
     DATA_CACHE_CONFIG = CACHE_CONFIG
 
@@ -833,16 +833,8 @@ EXPLORE_FORM_DATA_CACHE_CONFIG: CacheConfig = {
 STORE_CACHE_KEYS_IN_METADATA_DB = False
 
 # CORS Options
-ENABLE_CORS = True
-#CORS_OPTIONS: dict[Any, Any] = {}
-CORS_OPTIONS = {
-    'supports_credentials': True,
-    'allow_headers': ['Content-Type', 'Authorization', 'X-CSRFToken'],  # Be explicit instead of '*'
-    'origins': ['http://localhost:3000','https://copilot-frontend-internal-prod-5juwycv3iq-uc.a.run.app/','https://copilot-frontend-v1-5juwycv3iq-uc.a.run.app/','https://copilot-frontend-stage-5juwycv3iq-uc.a.run.app/'],  # Must be explicit, no '*'
-    'methods': ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    'credentials': True,
-    'expose_headers': ['Content-Type', 'X-CSRFToken']
-}
+ENABLE_CORS = False
+CORS_OPTIONS: dict[Any, Any] = {}
 
 # Sanitizes the HTML content used in markdowns to allow its rendering in a safe manner.
 # Disabling this option is not recommended for security reasons. If you wish to allow
@@ -960,10 +952,6 @@ ADDITIONAL_MIDDLEWARE: list[Callable[..., Any]] = []
 # Default configurator will consume the LOG_* settings below
 LOGGING_CONFIGURATOR = DefaultLoggingConfigurator()
 
-SQLALCHEMY_POOL_SIZE = 45
-SQLALCHEMY_MAX_OVERFLOW = 30
-SQLALCHEMY_POOL_TIMEOUT = 300
-
 # Console Log Settings
 
 LOG_FORMAT = "%(asctime)s:%(levelname)s:%(name)s:%(message)s"
@@ -1043,15 +1031,10 @@ CELERY_BEAT_SCHEDULER_EXPIRES = timedelta(weeks=1)
 
 class CeleryConfigProd:
     broker_url = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_CELERY_DB}"
-    imports = ("superset.sql_lab","superset.tasks.scheduler")
+    imports = ("superset.sql_lab","superset.tasks.scheduler",)
     result_backend = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULTS_DB}"
-    worker_prefetch_multiplier = 2
+    worker_prefetch_multiplier = 4
     task_acks_late = True
-    task_routes = {
-        "superset.sql_lab.*": {"queue": "sql_lab"},
-        "superset.tasks.scheduler.*": {"queue": "scheduler"},
-        "reports.*": {"queue": "reports"},
-    }
     task_annotations = {
         "sql_lab.get_sql_results": {
             "rate_limit": "100/s",
@@ -1095,7 +1078,6 @@ CELERY_CONFIG = CeleryConfig
 
 if REDIS_HOST != "":
     CELERY_CONFIG = CeleryConfigProd
-    logger.info("Using Celery with Redis broker")
   
 # pylint: disable=invalid-name
 
@@ -1112,11 +1094,7 @@ if REDIS_HOST != "":
 DEFAULT_HTTP_HEADERS: dict[str, Any] = {}
 #OVERRIDE_HTTP_HEADERS: dict[str, Any] = {}
 OVERRIDE_HTTP_HEADERS = {'X-Frame-Options': 'ALLOWALL'}
-#HTTP_HEADERS: dict[str, Any] = {}
-HTTP_HEADERS = {
-    'X-Frame-Options': 'ALLOWALL',
-    'Content-Security-Policy': "frame-ancestors *"
-}
+HTTP_HEADERS: dict[str, Any] = {}
 
 # The db id here results in selecting this one as a default in SQL Lab
 DEFAULT_DB_ID = None
@@ -1131,7 +1109,7 @@ SQLLAB_VALIDATION_TIMEOUT = int(timedelta(seconds=10).total_seconds())
 SQLLAB_DEFAULT_DBID = None
 
 # The MAX duration a query can run for before being killed by celery.
-SQLLAB_ASYNC_TIME_LIMIT_SEC = int(timedelta(minutes=30).total_seconds())
+SQLLAB_ASYNC_TIME_LIMIT_SEC = int(timedelta(hours=3).total_seconds())
 
 # Some databases support running EXPLAIN queries that allow users to estimate
 # query costs before they run. These EXPLAIN queries should have a small
@@ -1170,6 +1148,9 @@ QUERY_COST_FORMATTERS_BY_ENGINE: dict[
 # Flag that controls if limit should be enforced on the CTA (create table as queries).
 SQLLAB_CTAS_NO_LIMIT = False
 
+# Celery Task Queue Settings
+WEBSERVER_THREADS = 12
+
 # This allows you to define custom logic around the "CREATE TABLE AS" or CTAS feature
 # in SQL Lab that defines where the target schema should be for a given user.
 # Database `CTAS Schema` has a precedence over this setting.
@@ -1202,6 +1183,7 @@ RESULTS_BACKEND: BaseCache | None = None
 # community before it is fully adopted, so this config option is provided
 # in order to disable should breaking issues be discovered.
 RESULTS_BACKEND_USE_MSGPACK = True
+RESULTS_BACKEND_CONNECTION_TIMEOUT = 120
 
 # The S3 bucket where you want to store your external hive tables created
 # from CSV files. For example, 'companyname-superset'
@@ -1211,8 +1193,6 @@ CSV_TO_HIVE_UPLOAD_S3_BUCKET = None
 # contain all the external tables
 CSV_TO_HIVE_UPLOAD_DIRECTORY = "EXTERNAL_HIVE_TABLES/"
 
-if REDIS_HOST != "":
-    RESULTS_BACKEND = RedisCache(host=REDIS_HOST, port=REDIS_PORT, key_prefix='superset_results_')
 
 # Function that creates upload directory dynamically based on the
 # database used, user and schema provided.
@@ -1276,7 +1256,7 @@ CONFIG_PATH_ENV_VAR = "SUPERSET_CONFIG_PATH"
 FLASK_APP_MUTATOR = None
 
 # smtp server configuration
-EMAIL_NOTIFICATIONS = True  # all the emails are sent using dryrun
+EMAIL_NOTIFICATIONS = False  # all the emails are sent using dryrun
 SMTP_HOST = os.environ.get("SMTP_HOST") 
 SMTP_STARTTLS = True
 SMTP_SSL = False
@@ -1545,12 +1525,10 @@ WEBDRIVER_CONFIGURATION: dict[Any, Any] = {"service_log_path": "/dev/null"}
 
 # Additional args to be passed as arguments to the config object
 # Note: If using Chrome, you'll want to add the "--marionette" arg.
-WEBDRIVER_OPTION_ARGS = ["--headless", "--no-sandbox", "--disable-dev-shm-usage"]
+WEBDRIVER_OPTION_ARGS = ["--headless"]
 
 # The base URL to query for accessing the user interface
 WEBDRIVER_BASEURL = "http://0.0.0.0:8088/"
-
-EMAIL_BASEURL = os.environ.get("SUPERSET_APP_URL") 
 # The base URL for the email report hyperlinks.
 WEBDRIVER_BASEURL_USER_FRIENDLY = WEBDRIVER_BASEURL
 # Time selenium will wait for the page to load and render for the email report.
@@ -1703,7 +1681,7 @@ TALISMAN_DEV_CONFIG = {
 # for details
 #
 SESSION_COOKIE_HTTPONLY = True  # Prevent cookie from being read by frontend JS?
-SESSION_COOKIE_SECURE = True  # Prevent cookie from being transmitted over non-tls?
+SESSION_COOKIE_SECURE = False  # Prevent cookie from being transmitted over non-tls?
 # SESSION_COOKIE_SAMESITE: Literal["None", "Lax", "Strict"] | None = "Lax"
 # Whether to use server side sessions from flask-session or Flask secure cookies
 SESSION_SERVER_SIDE = False
@@ -1725,10 +1703,17 @@ SEND_FILE_MAX_AGE_DEFAULT = int(timedelta(days=365).total_seconds())
 # SQLALCHEMY_DATABASE_URI by default if set to `None`
 #SQLALCHEMY_EXAMPLES_URI = "sqlite:///" + os.path.join(DATA_DIR, "examples.db")
 
+SQLALCHEMY_EXAMPLES_URI = os.environ.get("SUPERSET_EXAMPLE_SQL_URL", None)
+
 SECRET_KEY = os.environ.get("SUPERSET_APP_SECRET_KEY") 
 
 # The SQLAlchemy connection string.
 SQLALCHEMY_DATABASE_URI = os.environ.get("SUPERSET_SQL_URL") 
+
+SQLALCHEMY_POOL_SIZE = 30
+SQLALCHEMY_MAX_OVERFLOW = 10
+SQLALCHEMY_POOL_TIMEOUT = 30
+SQLALCHEMY_POOL_RECYCLE = 3600  # 60 minutes
 
 # Optional prefix to be added to all static asset paths when rendering the UI.
 # This is useful for hosting assets in an external CDN, for example
@@ -1774,6 +1759,14 @@ GLOBAL_ASYNC_QUERIES_REDIS_CONFIG = {
     "password": "",
     "db": 0,
     "ssl": False,
+    "socket_timeout": 120,
+    "socket_connect_timeout": 30,
+    "retry_on_timeout": True,
+    "max_connections": 150,
+    # Additional recommended settings
+    "health_check_interval": 30,  # Seconds
+    "retry_on_error": [TimeoutError, ConnectionError],
+    "retry_max": 3
 }
 GLOBAL_ASYNC_QUERIES_REDIS_STREAM_PREFIX = "async-events-"
 GLOBAL_ASYNC_QUERIES_REDIS_STREAM_LIMIT = 1000
@@ -1785,7 +1778,7 @@ GLOBAL_ASYNC_QUERIES_JWT_COOKIE_SAMESITE: None | (Literal["None", "Lax", "Strict
     None
 )
 GLOBAL_ASYNC_QUERIES_JWT_COOKIE_DOMAIN = None
-GLOBAL_ASYNC_QUERIES_JWT_SECRET = "test-secret-change-me"
+GLOBAL_ASYNC_QUERIES_JWT_SECRET = "VXI@SUPERSET@20112024227"
 GLOBAL_ASYNC_QUERIES_TRANSPORT: Literal["polling", "ws"] = "polling"
 GLOBAL_ASYNC_QUERIES_POLLING_DELAY = int(
     timedelta(milliseconds=500).total_seconds() * 1000

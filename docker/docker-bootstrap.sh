@@ -37,14 +37,54 @@ fi
 
 case "${1}" in
   worker)
-    echo "Starting Celery worker..."
+    echo "Starting Celery worker 1..."
     # setting up only 2 workers by default to contain memory usage in dev environments
-    celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-2}
+    # celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-2}
+    #celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-8} --max-tasks-per-child=10000 --task-time-limit=3600 --prefetch-multiplier=1
+    #celery --app=superset.tasks.celery_app:app worker --pool=prefork -O fair --concurrency=${CELERYD_CONCURRENCY:-4} --prefetch-multiplier=1
+    #celery --app=superset.tasks.celery_app:app worker -l INFO -P gevent --concurrency=16
+    celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=12 --max-memory-per-child=2048000  # 2GB per child process
+
+    ;;
+  worker1)
+    echo "Starting Celery worker 1..."
+    # setting up only 2 workers by default to contain memory usage in dev environments
+    # celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-2}
+    #celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-8} --max-tasks-per-child=10000 --task-time-limit=3600 --prefetch-multiplier=1
+    #celery --app=superset.tasks.celery_app:app worker -n worker1@%h --pool=prefork -O fair --concurrency=${CELERYD_CONCURRENCY:-4} --prefetch-multiplier=1
+    celery --app=superset.tasks.celery_app:app worker -n worker1@%h -O fair -l INFO --concurrency=12 --max-memory-per-child=2048000  # 2GB per child process
+    #celery --app=superset.tasks.celery_app:app worker -l INFO -P gevent --concurrency=16
+
+    ;;
+  worker2)
+    echo "Starting Celery worker 2..."
+    # setting up only 2 workers by default to contain memory usage in dev environments
+    # celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-2}
+    #celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-8} --max-tasks-per-child=10000 --task-time-limit=3600 --prefetch-multiplier=1
+    #celery --app=superset.tasks.celery_app:app worker -n worker2@%h --pool=prefork -O fair --concurrency=${CELERYD_CONCURRENCY:-4} --prefetch-multiplier=1    #celery --app=superset.tasks.celery_app:app worker -l INFO -P gevent --concurrency=16
+    celery --app=superset.tasks.celery_app:app worker -n worker2@%h  -O fair -l INFO --concurrency=12 --max-memory-per-child=2048000  # 2GB per child process
+
+    ;;
+  worker3)
+    echo "Starting Celery worker 3..."
+    # setting up only 2 workers by default to contain memory usage in dev environments
+    # celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-2}
+    #celery --app=superset.tasks.celery_app:app worker -O fair -l INFO --concurrency=${CELERYD_CONCURRENCY:-8} --max-tasks-per-child=10000 --task-time-limit=3600 --prefetch-multiplier=1
+    #celery --app=superset.tasks.celery_app:app worker -n worker3@%h --pool=prefork -O fair --concurrency=${CELERYD_CONCURRENCY:-4} --prefetch-multiplier=1    #celery --app=superset.tasks.celery_app:app worker -l INFO -P gevent --concurrency=16
+    celery --app=superset.tasks.celery_app:app worker -n worker3@%h -O fair -l INFO --concurrency=12 --max-memory-per-child=2048000  # 2GB per child process
+
     ;;
   beat)
     echo "Starting Celery beat..."
     rm -f /tmp/celerybeat.pid
     celery --app=superset.tasks.celery_app:app beat --pidfile /tmp/celerybeat.pid -l INFO -s "${SUPERSET_HOME}"/celerybeat-schedule
+    ;;
+  flower)
+    echo "Starting Celery Flower..."
+    echo "CELERY_BROKER_URL: ${CELERY_BROKER_URL}"
+    echo "FLOWER_BASIC_AUTH: ${FLOWER_BASIC_AUTH}"
+    celery --app=superset.tasks.celery_app:app --broker="${CELERY_BROKER_URL}" flower --basic_auth="${FLOWER_BASIC_AUTH}"
+
     ;;
   app)
     echo "Starting web app (using development server)..."

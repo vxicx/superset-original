@@ -33,7 +33,8 @@ RUN apt-get update -qq \
         python3
 
 ENV BUILD_CMD=${NPM_BUILD_CMD} \
-    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+    PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    DOCKER_BUILDKIT=1 
 # NPM ci first, as to NOT invalidate previous steps except for when package.json changes
 WORKDIR /app/superset-frontend
 
@@ -42,9 +43,11 @@ RUN --mount=type=bind,target=/frontend-mem-nag.sh,src=./docker/frontend-mem-nag.
 
 RUN --mount=type=bind,target=./package.json,src=./superset-frontend/package.json \
     --mount=type=bind,target=./package-lock.json,src=./superset-frontend/package-lock.json \
-    npm ci
+    CYPRESS_INSTALL_BINARY=0 npm ci
 
 COPY ./superset-frontend ./
+
+RUN npm instal @luma.gl/gltools
 
 # This seems to be the most expensive step
 RUN npm run ${BUILD_CMD}
@@ -150,6 +153,7 @@ RUN pip install prophet
 RUN pip install sqlalchemy-bigquery
 RUN pip install pymssql
 RUN pip install cx_Oracle
+RUN pip install flower
 
 USER superset
 ######################################################################
